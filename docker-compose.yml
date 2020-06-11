@@ -1,0 +1,87 @@
+version: '3'
+
+services:
+  ad-server:
+    build:
+      context: ./
+      dockerfile: ./ad-server.dockerfile
+    networks:
+      external:
+        ipv4_address: 10.6.0.5
+  dnssrv:
+    image: python:3.8
+    command: bash /code/startdns.sh
+    volumes:
+      - .:/code
+    networks:
+      external:
+        ipv4_address: 10.6.0.4
+  browser:
+    image: jlesage/firefox
+    environment: # Disable FF services which make noise in wireshark (has no effect on exploit)
+      - FF_PREF_DISABLE_UPDATE=browser.safebrowsing.provider.mozilla.gethashURL=
+      - FF_PREF_DISABLE_UPDATE2=browser.safebrowsing.provider.mozilla.updateURL=
+      - FF_PREF_CAPTIV_MAX_INTERVAL=network.captive-portal-service.maxInterval=0
+      - FF_PREF_DOM_PUSH=dom.push.enabled=false
+      - FF_PREF_CAPTIV_PROTAL=network.captive-portal-service.enabled=false
+      - FF_PREF_CAPTIV_URL=captivedetect.canonicalURL=
+      - FF_PREF_TEL1=toolkit.telemetry.enabled=false
+      - FF_PREF_TEL2=toolkit.telemetry.rejected=true
+      - FF_PREF_TEL3=toolkit.telemetry.server=
+      - FF_PREF_TEL4=toolkit.telemetry.unified=false
+      - FF_PREF_TEL5=toolkit.telemetry.unifiedIsOptIn=false
+      - FF_PREF_TEL6=devtools.onboarding.telemetry.logged=false
+      - FF_PREF_TEL7=toolkit.telemetry.updatePing.enabled=false
+      - FF_PREF_TEL8=browser.newtabpage.activity-stream.feeds.telemetry=false
+      - FF_PREF_TEL9=browser.newtabpage.activity-stream.telemetry=false
+      - FF_PREF_TEL10=browser.ping-centre.telemetry=false
+      - FF_PREF_TEL11=toolkit.telemetry.bhrPing.enabled=false
+      - FF_PREF_TEL13=toolkit.telemetry.firstShutdownPing.enabled=false
+      - FF_PREF_TEL14=toolkit.telemetry.hybridContent.enabled=false
+      - FF_PREF_TEL15=toolkit.telemetry.newProfilePing.enabled=false
+      - FF_PREF_TEL16=toolkit.telemetry.reportingpolicy.firstRun=false
+      - FF_PREF_TEL17=toolkit.telemetry.shutdownPingSender.enabled=false
+      - FF_PREF_TEL18=toolkit.telemetry.unified=false
+      - FF_PREF_TEL19=toolkit.telemetry.updatePing.enabled=false
+      - FF_PREF_TEL20=toolkit.telemetry.reportingpolicy.firstRun=false
+      - FF_PREF_TEL21=toolkit.telemetry.unified=false
+      - FF_PREF_TEL22=toolkit.telemetry.archive.enabled=false
+      - FF_PREF_TEL23=devtools.onboarding.telemetry.logged=false
+      - FF_PREF_TEL24=toolkit.telemetry.bhrPing.enabled=false
+      - FF_PREF_TEL25=datareporting.healthreport.uploadEnabled=false
+      - FF_PREF_TEL26=datareporting.policy.dataSubmissionEnabled=false
+      - FF_PREF_TEL27=datareporting.sessions.current.clean=true
+      - FF_PREF_TEL28=datareporting.healthreport.uploadEnabled=false
+      - FF_PREF_TEL29=datareporting.policy.dataSubmissionEnabled=false
+      - FF_PREF_TEL30=datareporting.sessions.current.clean=true
+    ports:
+      - 5800:5800
+    networks:
+      internal:
+        ipv4_address: 10.5.0.2
+      external:
+        ipv4_address: 10.6.0.2
+    shm_size: 2g
+    dns: 10.6.0.4 
+  internal-service:
+    build:
+      context: ./
+      dockerfile: ./internal-service.dockerfile
+    networks:
+      internal:
+        ipv4_address: 10.5.0.40
+
+networks:
+  internal:
+    driver: bridge
+    ipam:
+     config:
+       - subnet: 10.5.0.0/16
+  external:
+    driver: bridge
+    ipam:
+     config:
+       - subnet: 10.6.0.0/16
+volumes:
+  postgres_volume:
+    external: true
